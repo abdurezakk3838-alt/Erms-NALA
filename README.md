@@ -16,8 +16,6 @@ npm install
 
 ## Environment setup
 
-Copy the example environment file:
-
 ```bash
 cp .env.example .env
 ```
@@ -47,13 +45,31 @@ npm run build
 npm start
 ```
 
+## Run tests
+
+```bash
+npm test
+```
+
 ## API Endpoints
 
 - `GET /health` - service health status
 - `GET /api/v1` - API metadata
+- `GET /api/v1/users` - list users
+- `POST /api/v1/users` - create user
 
-## Sample curl
+## Sample requests
 
 ```bash
 curl http://localhost:5000/health
+```
+
+```bash
+curl http://localhost:5000/api/v1
+```
+
+```bash
+curl -X POST http://localhost:5000/api/v1/users \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","name":"NALA User"}'
 ```
