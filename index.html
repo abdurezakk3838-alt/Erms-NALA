@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NALA Enhanced Records Management</title>
+
+    <!-- ─── CDN DEPENDENCIES ─── -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- ─── EXTERNAL CSS ─── -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- ═══ TOAST ═══ -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle text-green-400"></i>
+        <div>
+            <span id="toastMessage" class="font-semibold text-sm">Action Completed</span>
+            <br />
+            <span id="toastSubMessage" class="text-xs text-gray-300"></span>
+        </div>
+    </div>
+
+    <!-- ─── LOGIN PAGE ─── -->
+    <div id="loginPage" class="login-page">
+        <div class="login-card">
+            <div class="logo">
+                <img src="logo.png" alt="NALA Logo" class="h-12 mx-auto mb-2"
+                onerror="this.src='https://via.placeholder.com/150x50?text=NALA+ERMS'" />
+                <h1>ERMS</h1>
+                <P>National Archive and library services</P>
+                <p class="text-sm">Enhanced Records Management System</p>
+            </div>
+            <form id="loginForm" autocomplete="off">
+                <div class="form-group">
+                    <label><i class="fas fa-user mr-1"></i> Select User / Role</label>
+                    <select id="userQuickSelect">
+                        <option value="Head Office" data-role="head_office" data-pw="head123">Head Office Officer</option>
+                        <option value="Branch Officer - Harar" data-role="branch" data-pw="harar123">Branch Officer</option>
+                        <option value="Dept Manager" data-role="dept_manager" data-pw="manager123">Department Manager</option>
+                        <option value="Records Officer" data-role="records_officer" data-pw="records123">Records Officer</option>
+                        <option value="Director General" data-role="director" data-pw="director123">Director General</option>
+                        <option value="Admin" data-role="admin" data-pw="admin123">System Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock mr-1"></i> Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required />
+                    <div id="passwordHint" class="password-hint">
+                        <i class="fas fa-info-circle mr-1"></i>Hint: head123 / harar123 / manager123 / records123 / director123 / admin123
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user-tag mr-1"></i> Role Assigned</label>
+                    <input type="text" id="roleDisplayInput" class="font-semibold" value="Head Office Officer" readonly />
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+            </form>
+            <p class="text-center text-xs text-gray-400 mt-4">
+                <i class="fas fa-shield-alt mr-1"></i> Secured · ISO 15489 Compliant
+            </p>
+        </div>
+    </div>
+
+    <!-- ═══ MAIN APP ═══ -->
+    <div id="appMain" style="display:none;">
+
+        <!-- ─── SIDEBAR ─── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="p-5 flex items-center gap-3 border-b border-white/10">
+                <img src="logo.png" alt="NALA Logo" class="h-12 mx-auto mb-2"
+                onerror="this.src='https://via.placeholder.com/150x50?text=NALA+ERMS'" />
+                <div class="text-white font-bold text-2xl leading-tight tracking-tight">ERMS</div>
+                <div>
+                    <div class="text-white/50 text-[0.5rem] uppercase tracking-wider">NALA · ERMS</div>
+                </div>
+            </div>
+
+            <nav class="mt-4 pb-20" id="sidebarNav">
+                <div class="px-4 py-2 text-white/30 text-[0.6rem] font-semibold uppercase tracking-wider">Main </div>
+                <a class="nav-link active" data-page="dashboard"><i class="fas fa-th-large"></i> <span data-i18n="dashboard">Dashboard</span></a>
+                <a class="nav-link" data-page="incoming" data-roles="head_office,admin,records_officer,director,dept_manager"><i class="fas fa-inbox"></i> <span data-i18n="incoming_Letters">Incoming Letters</span></a>
+                <a class="nav-link" data-page="outgoing" data-roles="head_office,admin,records_officer,director,dept_manager"><i class="fas fa-paper-plane"></i> <span data-i18n="outgoing_letters">Outgoing Letters</span></a>
+                <a class="nav-link" data-page="internal" data-roles="head_office,admin,records_officer,director,dept_manager"><i class="fas fa-envelope"></i> <span data-i18n="internal">Internal</span></a>
+
+                <div class="px-4 py-2 mt-4 text-white/30 text-[0.6rem] font-semibold uppercase tracking-wider">Management</div>
+                <a class="nav-link" data-page="records" data-roles="head_office,admin,records_officer,dept_manager"><i class="fas fa-folder-open"></i> <span data-i18n="records">Records</span></a>
+                <a class="nav-link" data-page="workflow" data-roles="head_office,admin,records_officer,dept_manager,director"><i class="fas fa-diagram-project"></i> <span data-i18n="workflow">Workflow</span></a>
+                <a class="nav-link" data-page="archive" data-roles="head_office,admin,records_officer,director"><i class="fas fa-archive"></i> <span data-i18n="archive">Archive</span></a>
+                <a class="nav-link" data-page="search" data-roles="head_office,admin,records_officer,dept_manager,staff,director"><i class="fas fa-search"></i> <span data-i18n="search">Search</span></a>
+
+                <div class="px-4 py-2 mt-4 text-white/30 text-[0.6rem] font-semibold uppercase tracking-wider">Admin</div>
+                <a class="nav-link" data-page="users" data-roles="admin"><i class="fas fa-users-cog"></i> <span data-i18n="users">User Management</span></a>
+                <a class="nav-link" data-page="audit" data-roles="admin,director"><i class="fas fa-clipboard-list"></i> <span data-i18n="audit">Audit Trail</span></a>
+                <a class="nav-link" data-page="reports" data-roles="admin,dept_manager,director"><i class="fas fa-chart-bar"></i> <span data-i18n="reports">Reports</span></a>
+
+                <div class="px-4 py-2 mt-4 text-white/30 text-[0.6rem] font-semibold uppercase tracking-wider">System</div>
+                <a class="nav-link" data-page="settings" data-roles="admin,head_office,records_officer,dept_manager,staff,director"><i class="fas fa-cog"></i> <span data-i18n="settings">Settings</span></a>
+                <a class="nav-link" id="logoutBtn" style="color:#f87171;"><i class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Logout</span></a>
+            </nav>
+        </aside>
+
+        <!-- ─── MAIN CONTENT ─── -->
+        <div class="main-content" id="mainContent">
+
+            <!-- TOPBAR -->
+            <header class="topbar">
+                <div class="flex items-center gap-4">
+                    <button class="menu-btn mobile-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+                    <span class="text-sm font-semibold text-gray-700" id="pageTitle">Dashboard</span>
+                </div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="lang-selector" id="langSelector">
+                        <button class="active" data-lang="en">EN</button>
+                        <button data-lang="am">አማ</button>
+                        <button data-lang="om">Oro</button>
+                    </div>
+                    <button id="themeToggleBtn" class="menu-btn" title="Toggle Dark Mode">
+                        <i class="fas fa-moon" id="themeToggleIcon"></i>
+                    </button>
+                    <div class="relative">
+                        <i class="fas fa-bell text-xl text-gray-500 cursor-pointer hover:text-gray-700"></i>
+                        <span class="notification-dot"></span>
+                    </div>
+                    <div class="user-badge" id="profileTrigger" title="View Profile">
+                        <div class="avatar" id="userAvatar">H</div>
+                        <div>
+                            <div class="text-sm font-semibold text-gray-800" id="userDisplayName">Head Office</div>
+                            <div class="text-xs text-gray-400" id="userRoleDisplay">Head Office Officer</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- PAGE CONTAINERS -->
+            <div class="p-6" id="pageContainer">
+
+                <!-- Dashboard -->
+                <div class="page-section active" id="page-dashboard"></div>
+
+                <!-- Incoming -->
+                <div class="page-section" id="page-incoming">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                        <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-inbox text-blue-600 mr-2"></i><span data-i18n="incoming_records">Incoming Records</span></h2>
+                        <button id="openRegisterModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition flex items-center gap-2 hidden">
+                            <i class="fas fa-plus"></i> <span data-i18n="New_incoming Letters">New Incoming letters</span>
+                        </button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><span data-i18n="ref">Ref #</span></th>
+                                    <th><span data-i18n="sender_unique">Unique letters number#</span></th>
+                                    <th><span data-i18n="title">Title</span></th>
+                                    <th><span data-i18n="sender">Sender</span></th>
+                                    <th><span data-i18n="receiver">Receiver</span></th>
+                                    <th><span data-i18n="attached">Attached</span></th>
+                                    <th><span data-i18n="status">Status</span></th>
+                                    <th><span data-i18n="date">Date</span></th>
+                                    <th><span data-i18n="qr_code">QR Code</span></th>
+                                    <th><span data-i18n="actions">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="incomingTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-sm text-gray-400">
+                        <span id="incomingCount">Showing 0 entries</span>
+                    </div>
+                </div>
+
+                <!-- Outgoing -->
+                <div class="page-section" id="page-outgoing">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                        <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-paper-plane text-blue-600 mr-2"></i><span data-i18n="outgoing_records">Outgoing Records</span></h2>
+                        <button id="openOutgoingModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition flex items-center gap-2 hidden">
+                            <i class="fas fa-plus"></i> <span data-i18n="register_outgoing">New Outgoing Letters</span>
+                        </button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><span data-i18n="ref">Ref #</span></th>
+                                    <th><span data-i18n="title">Title</span></th>
+                                    <th><span data-i18n="sender">Sender</span></th>
+                                    <th><span data-i18n="receiver">Receiver</span></th>
+                                    <th><span data-i18n="status">Status</span></th>
+                                    <th><span data-i18n="date">Date</span></th>
+                                    <th><span data-i18n="qr_code">QR Code</span></th>
+                                    <th><span data-i18n="actions">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="outgoingTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-sm text-gray-400">
+                        <span id="outgoingCount">Showing 0 entries</span>
+                    </div>
+                </div>
+
+                <!-- Internal -->
+                <div class="page-section" id="page-internal">
+                    <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+                        <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-envelope text-blue-600 mr-2"></i><span data-i18n="internal">Internal Memos</span></h2>
+                        <button id="openInternalModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition flex items-center gap-2 hidden">
+                            <i class="fas fa-plus"></i> <span data-i18n="new_internal">New Internal Memo</span>
+                        </button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><span data-i18n="ref">Ref #</span></th>
+                                    <th><span data-i18n="title">Title</span></th>
+                                    <th><span data-i18n="sender">Sender</span></th>
+                                    <th><span data-i18n="receiver">Receiver</span></th>
+                                    <th><span data-i18n="attached">Attached</span></th>
+                                    <th><span data-i18n="status">Status</span></th>
+                                    <th><span data-i18n="date">Date</span></th>
+                                    <th><span data-i18n="qr_code">QR Code</span></th>
+                                    <th><span data-i18n="actions">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="internalTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-sm text-gray-400">
+                        <span id="internalCount">Showing 0 entries</span>
+                    </div>
+                </div>
+
+                <!-- Records -->
+                <div class="page-section" id="page-records">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-folder-open text-blue-600 mr-2"></i><span data-i18n="records">Records Repository</span></h2>
+                    <div class="stat-card"><p class="text-sm text-gray-600" data-i18n="records_desc">Centralized electronic record classification and storage.</p></div>
+                </div>
+
+                <!-- Workflow -->
+                <div class="page-section" id="page-workflow">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-diagram-project text-blue-600 mr-2"></i><span data-i18n="workflow">Workflow Routing</span></h2>
+                    <div class="stat-card"><p class="text-sm text-gray-600" data-i18n="workflow_desc">Manage document routing rules and approval steps.</p></div>
+                </div>
+
+                <!-- Archive -->
+                <div class="page-section" id="page-archive">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-archive text-blue-600 mr-2"></i><span data-i18n="archive">Archive Management</span></h2>
+                    <div class="stat-card"><p class="text-sm text-gray-600" data-i18n="archive_desc">Long-term preserved records and historical documents.</p></div>
+                </div>
+
+                <!-- Search -->
+                <div class="page-section" id="page-search">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-search text-blue-600 mr-2"></i><span data-i18n="search">Advanced Search</span></h2>
+                    <div class="stat-card">
+                        <form id="searchForm" class="space-y-4">
+                            <div class="search-filters-grid">
+                                <div><label class="form-label" data-i18n="ref">Reference Number</label><input type="text" id="searchRef" class="form-control" placeholder="e.g. INC-2025-..." /></div>
+                                <div><label class="form-label" data-i18n="title">Title / Subject</label><input type="text" id="searchTitle" class="form-control" placeholder="Search by title..." /></div>
+                                <div><label class="form-label" data-i18n="sender">Sender</label><input type="text" id="searchSender" class="form-control" placeholder="Sender name..." /></div>
+                                <div><label class="form-label" data-i18n="receiver">Receiver</label><input type="text" id="searchReceiver" class="form-control" placeholder="Receiver name..." /></div>
+                                <div><label class="form-label" data-i18n="status">Status</label><select id="searchStatus" class="form-control"><option value="">All</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="pending_approval">Pending Approval</option><option value="dispatched">Dispatched</option></select></div>
+                                <div><label class="form-label" data-i18n="type">Document Type</label><select id="searchType" class="form-control"><option value="all">All</option><option value="incoming">Incoming</option><option value="outgoing">Outgoing</option><option value="internal">Internal</option></select></div>
+                                <div><label class="form-label" data-i18n="date_from">Date From</label><input type="date" id="searchDateFrom" class="form-control" /></div>
+                                <div><label class="form-label" data-i18n="date_to">Date To</label><input type="date" id="searchDateTo" class="form-control" /></div>
+                            </div>
+                            <div class="flex gap-3"><button type="submit" class="btn-primary"><i class="fas fa-search"></i> <span data-i18n="search">Search</span></button><button type="reset" class="btn-outline" id="clearSearchBtn"><i class="fas fa-times"></i> <span data-i18n="clear">Clear</span></button></div>
+                        </form>
+                        <div id="searchResultsContainer" class="mt-4"><p class="text-sm text-gray-400" data-i18n="search_hint">Enter search criteria and click Search.</p></div>
+                    </div>
+                </div>
+
+                <!-- Users -->
+                <div class="page-section" id="page-users">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-users-cog text-blue-600 mr-2"></i><span data-i18n="users">User Management</span></h2>
+                    <div class="stat-card">
+                        <div class="admin-actions-bar"><button id="openAddUserModalBtn" class="btn-success text-sm"><i class="fas fa-user-plus"></i> <span data-i18n="add_user">Add New User</span></button><span class="text-xs text-gray-400 ml-auto" id="userCountDisplay">Total: 0 users</span></div>
+                        <div id="userAccountsGrid" class="user-accounts-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Audit -->
+                <div class="page-section" id="page-audit">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-clipboard-list text-blue-600 mr-2"></i><span data-i18n="audit">Audit Trail</span></h2>
+                    <div class="stat-card">
+                        <div class="flex items-center justify-between mb-3"><span class="text-sm text-gray-500" data-i18n="audit_desc">All system activities are logged here.</span><button id="clearAuditBtn" class="btn-outline text-xs hidden">Clear Logs (Admin Only)</button></div>
+                        <div id="auditLogContainer"></div>
+                        <div class="mt-3 text-xs text-gray-400" id="auditCount">Showing 0 entries</div>
+                    </div>
+                </div>
+
+                <!-- Reports -->
+                <div class="page-section" id="page-reports">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-chart-bar text-blue-600 mr-2"></i><span data-i18n="reports">Reports</span></h2>
+                    <div class="stat-card">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700 mb-3" data-i18n="generate_reports">Generate Reports</p>
+                                <div class="flex flex-col gap-2">
+                                    <button onclick="generateReport('daily')" class="btn-primary text-sm w-full justify-center"><i class="fas fa-calendar-day"></i> <span data-i18n="daily_register">Daily Register</span></button>
+                                    <button onclick="generateReport('monthly')" class="btn-primary text-sm w-full justify-center"><i class="fas fa-calendar-alt"></i> <span data-i18n="monthly_summary">Monthly Summary</span></button>
+                                    <button onclick="generateReport('compliance')" class="btn-primary text-sm w-full justify-center"><i class="fas fa-check-double"></i> <span data-i18n="compliance_report">Compliance Report</span></button>
+                                    <button onclick="generateReport('workflow')" class="btn-primary text-sm w-full justify-center"><i class="fas fa-flowchart"></i> <span data-i18n="workflow_performance">Workflow Performance</span></button>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-700 mb-3" data-i18n="report_preview">Report Preview</p>
+                                <div id="reportPreview" class="report-preview-box" data-i18n="select_report">Select a report to preview.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings / Profile -->
+                <div class="page-section" id="page-settings">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-user-circle text-blue-600 mr-2"></i><span data-i18n="settings">My Profile</span></h2>
+                    <div class="stat-card" id="profileContent"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MODALS ──────────────────────────────────────────────────────── -->
+
+    <!-- MODAL: Register Incoming Letter -->
+    <div id="registerModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6" id="modalTitle"><i class="fas fa-file-import text-blue-600 mr-2"></i><span data-i18n="register_incoming">Register Incoming Letter</span></h2>
+            <form id="incomingForm">
+                <input type="hidden" id="editRefNumber" value="" />
+                <div class="form-grid">
+                    <div><label class="form-label" data-i18n="ref">System Ref Number</label><input type="text" id="refNumber" class="form-control" readonly /></div>
+                    <div><label class="form-label" data-i18n="sender_unique">Sender Unique Number</label><input type="text" id="senderUniqueNum" class="form-control" placeholder="e.g. MOF/REQ/2026/99" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="title">Title / Subject</label><input type="text" id="letterTitle" class="form-control" placeholder="e.g. Project Funding Request" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="description">Letter Description</label><textarea id="letterDesc" class="form-control" rows="2" placeholder="Brief description of the letter content"></textarea></div>
+                    <div><label class="form-label" data-i18n="sender">Sender Name / Org</label><input type="text" id="senderName" class="form-control" placeholder="Organization or person" required /></div>
+                    <div><label class="form-label" data-i18n="receiver">Receiver Name &amp; Email</label><select id="receiverSelect" class="form-control" required></select><div id="receiverEmailBadge" class="mt-1 text-xs text-blue-600 font-medium"></div></div>
+                    <div><label class="form-label" data-i18n="date">Date Received</label><input type="date" id="letterDate" class="form-control" required /></div>
+                    <div><label class="form-label" data-i18n="attached">Attach Document</label>
+                        <div id="dropZone" class="drop-zone">
+                            <div id="dropZoneContent"><i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i><p class="text-sm text-gray-500 mt-2" data-i18n="drag_drop">Drag &amp; drop a file here, or click to browse</p><input type="file" id="fileInput" style="display:none;" /></div>
+                            <div id="filePreview" style="display:none;" class="file-preview"></div>
+                        </div>
+                        <div id="uploadStatus" class="text-xs text-gray-400 mt-1"></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" class="btn-outline" id="cancelModalBtn" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn-success" id="sendLetterBtn"><i class="fas fa-paper-plane"></i> <span data-i18n="save_send">Save &amp; Send</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: View Incoming Letter -->
+    <div id="viewModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeViewModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-file-alt text-blue-600"></i> <span data-i18n="letter_details">Letter Details</span></h2>
+            <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4 text-sm space-y-2">
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400" data-i18n="ref">System Ref:</span><span id="viewRef" class="font-mono font-bold text-blue-600 dark:text-blue-400"></span></div>
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400" data-i18n="sender_unique">Sender Unique #:</span><span id="viewSenderUniq" class="font-mono text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="title">Title:</span><span id="viewTitle" class="font-semibold text-gray-800 dark:text-gray-200"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="sender">Sender:</span><span id="viewSender" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="receiver">Receiver:</span><span id="viewReceiver" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="receiver_email">Receiver Email:</span><span id="viewReceiverEmail" class="text-blue-600 dark:text-blue-400 font-mono text-xs"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="status">Status:</span><span id="viewStatus"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="date">Date Received:</span><span id="viewDate" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="description">Description:</span><p id="viewDesc" class="text-xs text-gray-600 dark:text-gray-300 italic bg-white dark:bg-slate-900 p-2 rounded border dark:border-slate-700 mt-1"></p></div>
+                <div id="viewFileWrapper" class="hidden"><span class="text-gray-500 dark:text-gray-400 block" data-i18n="attached_file">Attached File:</span><span id="viewFileName" class="text-xs font-mono text-blue-600 dark:text-blue-400"></span></div>
+                <div id="viewRemarkWrapper" class="hidden"><span class="text-gray-500 dark:text-gray-400 block" data-i18n="remarks">Receiver Remarks:</span><div id="viewRemark" class="remark-box"></div></div>
+                <div id="viewSigWrapper" class="hidden"><span class="text-gray-500 dark:text-gray-400 block" data-i18n="digital_signature">Digital Signature:</span><img id="viewSigImg" src="" alt="Digital Signature" class="sig-preview-img" /></div>
+            </div>
+            <div id="inlineSignatureContainer" class="mt-4"></div>
+            <div class="flex justify-end mt-4"><button type="button" class="btn-primary" id="closeViewBtn" data-i18n="close">Close</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: Review Incoming (fallback) -->
+    <div id="reviewIncomingModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeReviewIncomingModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-signature text-emerald-600"></i> <span data-i18n="review_approve">Review &amp; Approve Letter</span></h2>
+            <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4 text-sm space-y-2">
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400" data-i18n="ref">System Ref:</span><span id="reviewInRef" class="font-mono font-bold text-blue-600 dark:text-blue-400"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="title">Title:</span><span id="reviewInTitle" class="font-semibold text-gray-800 dark:text-gray-200"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="sender">Sender:</span><span id="reviewInSender" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="description">Description:</span><p id="reviewInDesc" class="text-xs text-gray-600 dark:text-gray-300 italic bg-white dark:bg-slate-900 p-2 rounded border dark:border-slate-700 mt-1"></p></div>
+                <div id="reviewInFileWrapper" class="hidden"><span class="text-gray-500 dark:text-gray-400 block" data-i18n="attached_file">Attached File:</span><span id="reviewInFileName" class="text-xs font-mono text-blue-600 dark:text-blue-400"></span></div>
+            </div>
+            <form id="reviewIncomingForm">
+                <input type="hidden" id="reviewInTargetRef" />
+                <div class="space-y-4">
+                    <div><label class="form-label" data-i18n="remarks">Receiver Remarks</label><textarea id="receiverInRemark" class="form-control" rows="3" placeholder="Add your approval notes or rejection reasons..." required></textarea></div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1"><label class="form-label" data-i18n="digital_signature">Digital Signature (for approval)</label><button type="button" id="clearInSigBtn" class="text-xs text-red-600 hover:underline" data-i18n="clear_signature">Clear Signature</button></div>
+                        <canvas id="sigInCanvas" class="sig-canvas"></canvas>
+                        <div id="sigInPreview" class="hidden mt-2 p-2 border rounded bg-white"><span class="text-xs text-gray-400 block mb-1" data-i18n="signed_seal">Signed Digital Seal:</span><img id="sigInImg" src="" alt="Digital Signature" class="h-16 object-contain" /></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" class="btn-outline" id="cancelReviewInBtn" data-i18n="close">Close</button>
+                    <button type="button" class="btn-danger" id="rejectInBtn"><i class="fas fa-times-circle"></i> <span data-i18n="reject">Reject</span></button>
+                    <button type="button" class="btn-success" id="approveInBtn"><i class="fas fa-check-circle"></i> <span data-i18n="approve">Approve</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Internal Memo -->
+    <div id="internalModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeInternalModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6" id="internalModalTitle"><i class="fas fa-envelope text-blue-600 mr-2"></i><span data-i18n="new_internal">Create Internal Memo</span></h2>
+            <form id="internalForm">
+                <input type="hidden" id="editInternalRef" value="" />
+                <div class="form-grid">
+                    <div><label class="form-label" data-i18n="ref">System Ref Number</label><input type="text" id="internalRef" class="form-control" readonly /></div>
+                    <div><label class="form-label" data-i18n="date">Date</label><input type="date" id="internalDate" class="form-control" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="title">Title / Subject</label><input type="text" id="internalTitle" class="form-control" placeholder="e.g. Meeting Minutes" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="description">Description</label><textarea id="internalDesc" class="form-control" rows="2" placeholder="Brief description"></textarea></div>
+                    <div><label class="form-label" data-i18n="sender">Sender</label><input type="text" id="internalSender" class="form-control" readonly value="Abdi" /></div>
+                    <div><label class="form-label" data-i18n="receiver">Receiver (Internal)</label><select id="internalReceiverSelect" class="form-control" required></select><div id="internalReceiverEmailBadge" class="mt-1 text-xs text-blue-600 font-medium"></div></div>
+                    <div class="full-width"><label class="form-label" data-i18n="attached">Attach Document</label>
+                        <div id="internalDropZone" class="drop-zone">
+                            <div id="internalDropZoneContent"><i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i><p class="text-sm text-gray-500 mt-2" data-i18n="drag_drop">Drag &amp; drop a file here, or click to browse</p><input type="file" id="internalFileInput" style="display:none;" /></div>
+                            <div id="internalFilePreview" style="display:none;" class="file-preview"></div>
+                        </div>
+                        <div id="internalUploadStatus" class="text-xs text-gray-400 mt-1"></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" class="btn-outline" id="cancelInternalModalBtn" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn-success"><i class="fas fa-paper-plane"></i> <span data-i18n="send_memo">Send Memo</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Review Internal -->
+    <div id="reviewInternalModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeReviewInternalModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-signature text-emerald-600"></i> <span data-i18n="review_internal">Review Internal Memo</span></h2>
+            <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4 text-sm space-y-2">
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400" data-i18n="ref">Ref:</span><span id="reviewInternalRef" class="font-mono font-bold text-blue-600 dark:text-blue-400"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="title">Title:</span><span id="reviewInternalTitle" class="font-semibold text-gray-800 dark:text-gray-200"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="sender">Sender:</span><span id="reviewInternalSender" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="receiver">Receiver:</span><span id="reviewInternalReceiver" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="description">Description:</span><p id="reviewInternalDesc" class="text-xs text-gray-600 dark:text-gray-300 italic bg-white dark:bg-slate-900 p-2 rounded border dark:border-slate-700 mt-1"></p></div>
+            </div>
+            <form id="reviewInternalForm">
+                <input type="hidden" id="reviewInternalTargetRef" />
+                <div class="space-y-4">
+                    <div><label class="form-label" data-i18n="remarks">Receiver Remarks</label><textarea id="receiverInternalRemark" class="form-control" rows="3" placeholder="Add remarks..." required></textarea></div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1"><label class="form-label" data-i18n="digital_signature">Digital Signature</label><button type="button" id="clearInternalSigBtn" class="text-xs text-red-600 hover:underline" data-i18n="clear_signature">Clear Signature</button></div>
+                        <canvas id="sigInternalCanvas" class="sig-canvas"></canvas>
+                        <div id="sigInternalPreview" class="hidden mt-2 p-2 border rounded bg-white"><span class="text-xs text-gray-400 block mb-1" data-i18n="signed_seal">Signed Digital Seal:</span><img id="sigInternalImg" src="" alt="Digital Signature" class="h-16 object-contain" /></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" class="btn-outline" id="cancelReviewInternalBtn" data-i18n="close">Close</button>
+                    <button type="button" class="btn-danger" id="rejectInternalBtn"><i class="fas fa-times-circle"></i> <span data-i18n="reject">Reject</span></button>
+                    <button type="button" class="btn-success" id="approveInternalBtn"><i class="fas fa-check-circle"></i> <span data-i18n="approve">Approve</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Outgoing Letter -->
+    <div id="outgoingModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeOutgoingModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6" id="outgoingModalTitle"><i class="fas fa-paper-plane text-blue-600 mr-2"></i><span data-i18n="create_outgoing">Create Outgoing Letter</span></h2>
+            <form id="outgoingForm">
+                <input type="hidden" id="editOutRef" value="" />
+                <div class="form-grid">
+                    <div><label class="form-label" data-i18n="ref">System Ref Number</label><input type="text" id="outRef" class="form-control" readonly /></div>
+                    <div><label class="form-label" data-i18n="date">Date</label><input type="date" id="outDate" class="form-control" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="title">Title</label><input type="text" id="outTitle" class="form-control" placeholder="e.g. Official Request" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="description">Description</label><textarea id="outDesc" class="form-control" rows="2"></textarea></div>
+                    <div><label class="form-label" data-i18n="sender">Sender</label><input type="text" id="outSender" class="form-control" readonly value="Abdi" /></div>
+                    <div><label class="form-label" data-i18n="receiver">Receiver</label><input type="text" id="outReceiver" class="form-control" placeholder="External Org" required /></div>
+                    <div><label class="form-label" data-i18n="receiver_email">Receiver Email</label><input type="email" id="outReceiverEmail" class="form-control" /></div>
+                    <div><label class="form-label" data-i18n="classification">Classification</label><select id="outClassification" class="form-control"><option value="General">General</option><option value="Confidential">Confidential</option><option value="Top Secret">Top Secret</option><option value="Urgent">Urgent</option></select></div>
+                    <div class="full-width"><label class="form-label" data-i18n="attached">Attach Document</label>
+                        <div id="outDropZone" class="drop-zone">
+                            <div id="outDropZoneContent"><i class="fas fa-cloud-upload-alt text-3xl text-gray-400"></i><p class="text-sm text-gray-500 mt-2" data-i18n="drag_drop">Drag &amp; drop a file here, or click to browse</p><input type="file" id="outFileInput" style="display:none;" /></div>
+                            <div id="outFilePreview" style="display:none;" class="file-preview"></div>
+                        </div>
+                        <div id="outUploadStatus" class="text-xs text-gray-400 mt-1"></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" class="btn-outline" id="cancelOutModalBtn" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn-success"><i class="fas fa-save"></i> <span data-i18n="submit_approval">Submit for Approval</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Review Outgoing -->
+    <div id="reviewOutModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeReviewOutModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2"><i class="fas fa-signature text-emerald-600"></i> <span data-i18n="review_outgoing">Outgoing Letter Review</span></h2>
+            <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 mb-4 text-sm space-y-2">
+                <div class="flex justify-between"><span class="text-gray-500 dark:text-gray-400" data-i18n="ref">Ref:</span><span id="reviewOutRef" class="font-mono font-bold text-blue-600 dark:text-blue-400"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="title">Title:</span><span id="reviewOutTitle" class="font-semibold text-gray-800 dark:text-gray-200"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="sender">Sender:</span><span id="reviewOutSender" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="receiver">Receiver:</span><span id="reviewOutReceiver" class="text-gray-700 dark:text-gray-300"></span></div>
+                <div><span class="text-gray-500 dark:text-gray-400 block" data-i18n="description">Description:</span><p id="reviewOutDesc" class="text-xs text-gray-600 dark:text-gray-300 italic bg-white dark:bg-slate-900 p-2 rounded border dark:border-slate-700 mt-1"></p></div>
+            </div>
+            <form id="reviewOutForm">
+                <input type="hidden" id="reviewOutTargetRef" />
+                <div class="space-y-4">
+                    <div><label class="form-label" data-i18n="remarks">Manager's Remarks</label><textarea id="managerReviewDesc" class="form-control" rows="3" required></textarea></div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1"><label class="form-label" data-i18n="digital_signature">Digital Signature</label><button type="button" id="clearOutSigBtn" class="text-xs text-red-600 hover:underline" data-i18n="clear_signature">Clear Signature</button></div>
+                        <canvas id="sigOutCanvas" class="sig-canvas"></canvas>
+                        <div id="sigOutPreview" class="hidden mt-2 p-2 border rounded bg-white"><span class="text-xs text-gray-400 block mb-1" data-i18n="signed_seal">Signed Digital Seal:</span><img id="sigOutImg" src="" alt="Digital Signature" class="h-16 object-contain" /></div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" class="btn-outline" id="cancelReviewOutBtn" data-i18n="close">Close</button>
+                    <button type="button" class="btn-danger" id="rejectOutBtn"><i class="fas fa-times-circle"></i> <span data-i18n="reject">Reject</span></button>
+                    <button type="button" class="btn-success" id="approveOutBtn"><i class="fas fa-check-circle"></i> <span data-i18n="approve">Approve</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: QR Detail Outgoing -->
+    <div id="qrDetailOutModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeQrDetailOutModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2 flex items-center gap-2"><i class="fas fa-qrcode text-blue-600"></i> <span data-i18n="qr_details">QR Authenticated Details</span></h2>
+            <p class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-4"><i class="fas fa-shield-alt"></i> <span data-i18n="qr_authenticated">NALA System QR Authenticated</span></p>
+            <div class="space-y-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 p-4 rounded-xl text-sm">
+                <div class="flex justify-between border-b dark:border-slate-700 pb-2"><span class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="ref">Ref:</span><span id="qrOutDetailRef" class="font-mono font-bold text-blue-700 dark:text-blue-400"></span></div>
+                <div class="flex justify-between border-b dark:border-slate-700 pb-2"><span class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="title">Title:</span><span id="qrOutDetailTitle" class="font-semibold text-slate-800 dark:text-slate-200"></span></div>
+                <div class="flex justify-between border-b dark:border-slate-700 pb-2"><span class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="sender">Sender:</span><span id="qrOutDetailSender" class="text-slate-800 dark:text-slate-200"></span></div>
+                <div class="flex justify-between border-b dark:border-slate-700 pb-2"><span class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="receiver">Receiver:</span><span id="qrOutDetailReceiver" class="text-slate-800 dark:text-slate-200"></span></div>
+                <div class="flex justify-between border-b dark:border-slate-700 pb-2"><span class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="receiver_email">Receiver Email:</span><span id="qrOutDetailReceiverEmail" class="text-blue-600 dark:text-blue-400 font-mono text-xs"></span></div>
+                <div class="flex justify-between border-b dark:border-slate-700 pb-2"><span class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="classification">Classification:</span><span id="qrOutDetailClassification" class="text-slate-800 dark:text-slate-200"></span></div>
+                <div class="flex justify-between border-b dark:border-slate-700 pb-2"><span class="text-slate-500 dark:text-slate-400 font-medium" data-i18n="status">Status:</span><span id="qrOutDetailStatus"></span></div>
+                <div><span class="text-slate-500 dark:text-slate-400 font-medium block mb-1" data-i18n="description">Description:</span><div id="qrOutDetailDesc" class="p-2.5 bg-white dark:bg-slate-900 border dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 text-xs"></div></div>
+                <div id="qrOutDetailRemarkWrapper" class="hidden"><span class="text-slate-500 dark:text-slate-400 font-medium block mb-1" data-i18n="remarks">Manager's Remarks:</span><div id="qrOutDetailRemark" class="remark-box"></div></div>
+                <div id="qrOutDetailSigWrapper" class="hidden"><span class="text-slate-500 dark:text-slate-400 font-medium block mb-1" data-i18n="digital_signature">Digital Signature:</span><img id="qrOutDetailSigImg" src="" alt="Digital Signature" class="sig-preview-img" /></div>
+            </div>
+            <div class="flex justify-end mt-5"><button type="button" class="btn-primary" id="closeQrOutDetailBtn" data-i18n="close">Close</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL: Add User -->
+    <div id="addUserModal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn" id="closeAddUserModalBtn">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i class="fas fa-user-plus text-emerald-600"></i> <span data-i18n="add_user">Add New User</span></h2>
+            <form id="addUserForm">
+                <div class="form-grid">
+                    <div class="full-width"><label class="form-label" data-i18n="full_name">Full Name</label><input type="text" id="newUserFullName" class="form-control" placeholder="e.g. Alemayehu Girma" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="email">Email</label><input type="email" id="newUserEmail" class="form-control" placeholder="alemayehu.girma@nala.gov.et" required /></div>
+                    <div><label class="form-label" data-i18n="role">Role</label><select id="newUserRole" class="form-control"><option value="records_officer">Records Officer</option><option value="dept_manager">Department Manager</option><option value="director">Director General</option><option value="staff">Staff Member</option><option value="admin">Administrator</option></select></div>
+                    <div><label class="form-label" data-i18n="password">Password</label><input type="text" id="newUserPassword" class="form-control" placeholder="e.g. alemayehu123" required /></div>
+                    <div class="full-width"><label class="form-label" data-i18n="department">Department</label><input type="text" id="newUserDept" class="form-control" placeholder="e.g. IT Services" required /></div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6 border-t pt-4">
+                    <button type="button" class="btn-outline" id="cancelAddUserBtn" data-i18n="cancel">Cancel</button>
+                    <button type="submit" class="btn-success"><i class="fas fa-save"></i> <span data-i18n="create_user">Create User</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── EXTERNAL JAVASCRIPT ─── -->
+    <script src="script.js"></script>
+
+</body>
+</html>
